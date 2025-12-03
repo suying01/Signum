@@ -578,6 +578,7 @@ export default function SignStreamGame({ stage, onBack }: SignStreamGameProps) {
                 <canvas
                     ref={canvasRef}
                     className="absolute inset-0 w-full h-full object-cover"
+                    style={{ transform: 'scaleX(-1)' }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/80" />
             </div>
