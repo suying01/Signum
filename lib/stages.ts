@@ -22,7 +22,7 @@ export const STAGES: Stage[] = [
         id: 2,
         name: "Action Words",
         description: "Move your hands!",
-        phrases: ["NO", "TIME"],
+        phrases: ["NO", "TIME", "LOVE", "PLAY", "HOUSE"],
         speedMultiplier: 1.0, // Slower for actions
         requiredScore: 2000,
         color: "from-blue-400 to-cyan-600"

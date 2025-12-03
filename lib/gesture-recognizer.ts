@@ -459,5 +459,89 @@ export function recognizeDynamicGesture(buffer: GestureBuffer): string | null {
         }
     }
 
+    // 6. LOVE (Cross Arms) - 2 Hands
+    // Logic: Wrists crossed or very close, Hands on Chest (Y approx 0.5-0.8?)
+    if (currentFrame.length >= 2) {
+        const hand1 = currentFrame[0];
+        const hand2 = currentFrame[1];
+
+        // Check Wrist Proximity
+        const dWrists = dist(hand1[0], hand2[0]);
+
+        // Check if hands are "fists" or "open" (usually fists or flat hands on chest)
+        // Let's just check proximity and location.
+        // Location: Y should be somewhat low (chest level, not face).
+        const avgY = (hand1[0].y + hand2[0].y) / 2;
+
+        if (dWrists < 0.15 && avgY > 0.4 && avgY < 0.9) {
+            // Check if hands are actually crossed?
+            // Hand 1 X < Hand 2 X (if normal), but if crossed, order might swap relative to body?
+            // Hard to tell "crossed" without body landmarks.
+            // But "Wrists touching at chest level" is a good proxy for LOVE.
+            return "LOVE";
+        }
+    }
+
+    // 7. PLAY (Shake Y-Hands) - 2 Hands
+    // Logic: Both hands "Y" shape + Rotation/Shake.
+    if (currentFrame.length >= 2) {
+        const hand1 = currentFrame[0];
+        const hand2 = currentFrame[1];
+
+        if (checkYShape(hand1) && checkYShape(hand2)) {
+            // Check for shaking motion (Rotation or Position oscillation)
+            // Let's check history of both hands.
+            const recentFramesForPlay = frames.slice(-10);
+
+            // Check if BOTH hands are oscillating
+            // Simplified: Check if *either* hand is oscillating significantly?
+            // Or just check if they are Y-hands for a duration?
+            // "PLAY" involves shaking.
+
+            // Let's check Wrist X oscillation for both.
+            let shakeCount = 0;
+            [hand1, hand2].forEach(h => {
+                // We can't track "h" across frames easily without ID.
+                // But we can check if the frame *contained* oscillating Y-hands.
+            });
+
+            // Alternative: Just check if we have 2 Y-hands for > 5 frames.
+            // The "Shake" is hard to distinguish from just holding Y without temporal tracking ID.
+            // But "Holding 2 Y hands" is rare enough.
+            // Let's require 2 Y-hands for 80% of recent history.
+            const twoYCount = recentFramesForPlay.filter(f => f.length >= 2 && checkYShape(f[0]) && checkYShape(f[1])).length;
+
+            if (twoYCount > 6) {
+                return "PLAY";
+            }
+        }
+    }
+
+    // 8. HOUSE (Roof Shape) - 2 Hands
+    // Logic: Flat Hands. Fingertips Touching. Wrists Apart.
+    if (currentFrame.length >= 2) {
+        const hand1 = currentFrame[0];
+        const hand2 = currentFrame[1];
+
+        if (isFlat(hand1) && isFlat(hand2)) {
+            // Check Fingertips Touching (Middle Fingers 12)
+            const dTips = dist(hand1[12], hand2[12]);
+
+            // Check Wrists Apart
+            const dWrists = dist(hand1[0], hand2[0]);
+
+            // Roof: Tips close, Wrists far.
+            if (dTips < 0.1 && dWrists > 0.2) {
+                // Also check Y: Tips should be higher than Wrists (Y is smaller)
+                const tipsY = (hand1[12].y + hand2[12].y) / 2;
+                const wristsY = (hand1[0].y + hand2[0].y) / 2;
+
+                if (tipsY < wristsY) {
+                    return "HOUSE";
+                }
+            }
+        }
+    }
+
     return null;
 }

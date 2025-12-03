@@ -28,6 +28,12 @@ type Tile = {
 const LANES = [20, 50, 80] // X positions (%)
 const HIT_ZONE_Y = 85
 
+const WORD_TO_FOLDER: Record<string, string> = {
+    "PLAY": "Play_Noun",
+    "HELP": "Help_Verb",
+    // Default fallback will be Title Case (e.g. "LOVE" -> "Love")
+}
+
 type ActionGameProps = {
     stage: Stage
     onBack: () => void
@@ -427,7 +433,7 @@ export default function ActionGame({ stage, onBack }: ActionGameProps) {
                         {/* Action Sign GIF */}
                         <div className="w-32 h-32 bg-white/10 rounded-xl overflow-hidden mb-2 relative">
                             <img
-                                src={`/action_signs/${tile.char.charAt(0).toUpperCase() + tile.char.slice(1).toLowerCase()}/demo.gif`}
+                                src={`/action_signs/${WORD_TO_FOLDER[tile.char] || tile.char.charAt(0).toUpperCase() + tile.char.slice(1).toLowerCase()}/demo.gif`}
                                 alt={tile.char}
                                 className="w-full h-full object-cover"
                                 onError={(e) => {
@@ -441,6 +447,9 @@ export default function ActionGame({ stage, onBack }: ActionGameProps) {
                             {tile.char === "NO" && "🤏 TAP!"}
                             {tile.char === "HELP" && "✊✋⬆️ LIFT!"}
                             {tile.char === "TIME" && "👆⌚️ TAP WRIST!"}
+                            {tile.char === "LOVE" && "❤️ CROSS ARMS!"}
+                            {tile.char === "PLAY" && "🤙🤙 SHAKE Ys!"}
+                            {tile.char === "HOUSE" && "🏠 ROOF SHAPE!"}
                         </div>
                     </motion.div>
                 ))}
