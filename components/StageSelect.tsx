@@ -139,9 +139,14 @@ export default function StageSelect({ onSelectStage, onSelectChallenge }: StageS
                                             <Badge variant="secondary" className="bg-gray-800 text-gray-300">
                                                 {stage.speedMultiplier}x Speed
                                             </Badge>
-                                            {stage.id >= 2 && (
-                                                <Badge variant="outline" className="border-neon-pink text-neon-pink">
-                                                    Action Mode
+                                            {stage.id === 2 && (
+                                                <Badge variant="secondary" className="bg-neon-blue text-black font-bold">
+                                                    ACTION MODE
+                                                </Badge>
+                                            )}
+                                            {stage.id === 3 && (
+                                                <Badge variant="secondary" className="bg-neon-pink text-black font-bold">
+                                                    POSE MODE
                                                 </Badge>
                                             )}
                                         </div>
