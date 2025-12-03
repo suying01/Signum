@@ -258,7 +258,13 @@ export default function SignStreamGame({ stage, onBack }: SignStreamGameProps) {
     // Game Loop
     const updateGame = useCallback((time: number) => {
         if (!lastTimeRef.current) lastTimeRef.current = time
-        const deltaTime = time - lastTimeRef.current
+        let deltaTime = time - lastTimeRef.current
+
+        // This makes it so it works on Windows Chrome
+        if (deltaTime < 0) {
+            deltaTime = 5;
+        }
+
         lastTimeRef.current = time
 
         if (gameOver) return;
