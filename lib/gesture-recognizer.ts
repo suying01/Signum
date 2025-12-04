@@ -221,3 +221,327 @@ export function recognizeGesture(landmarks: NormalizedLandmark[]): Gesture {
 
     return "NONE";
 }
+
+// --- Dynamic Gesture Support ---
+
+export class GestureBuffer {
+    buffer: NormalizedLandmark[][][] = []; // Array of Frames. Each Frame is Array of Hands.
+    maxSize: number;
+
+    constructor(maxSize: number = 30) {
+        this.maxSize = maxSize;
+    }
+
+    add(landmarks: NormalizedLandmark[][]) {
+        this.buffer.push(landmarks);
+        if (this.buffer.length > this.maxSize) {
+            this.buffer.shift();
+        }
+    }
+
+    getBuffer() {
+        return this.buffer;
+    }
+
+    clear() {
+        this.buffer = [];
+    }
+}
+
+export function recognizeDynamicGesture(buffer: GestureBuffer): string | null {
+    const frames = buffer.getBuffer();
+    if (frames.length < 5) return null;
+
+    const currentFrame = frames[frames.length - 1];
+    if (currentFrame.length === 0) return null;
+
+    // Helpers
+    const dist = (a: NormalizedLandmark, b: NormalizedLandmark) => Math.hypot(a.x - b.x, a.y - b.y);
+    const isExtended = (tip: NormalizedLandmark, pip: NormalizedLandmark, wrist: NormalizedLandmark) => dist(tip, wrist) > dist(pip, wrist);
+
+    // Helper to check if a hand matches "Y" shape
+    const checkYShape = (landmarks: NormalizedLandmark[]) => {
+        const thumbOpen = isExtended(landmarks[4], landmarks[2], landmarks[0]);
+        const pinkyOpen = isExtended(landmarks[20], landmarks[18], landmarks[0]);
+        const indexClosed = !isExtended(landmarks[8], landmarks[6], landmarks[0]);
+        const middleClosed = !isExtended(landmarks[12], landmarks[10], landmarks[0]);
+        const ringClosed = !isExtended(landmarks[16], landmarks[14], landmarks[0]);
+        return thumbOpen && pinkyOpen && indexClosed && middleClosed && ringClosed;
+    };
+
+    // Helper to check if a hand matches "Open Hand"
+    const checkOpenHand = (landmarks: NormalizedLandmark[]) => {
+        return landmarks[8].y < landmarks[5].y && landmarks[12].y < landmarks[9].y && landmarks[16].y < landmarks[13].y && landmarks[20].y < landmarks[17].y;
+    };
+
+    // Helper to check if a hand is a fist
+    const isFist = (l: NormalizedLandmark[]) => !isExtended(l[8], l[6], l[0]) && !isExtended(l[12], l[10], l[0]) && !isExtended(l[16], l[14], l[0]) && !isExtended(l[20], l[18], l[0]);
+    // Helper to check if a hand is flat (all fingers extended)
+    const isFlat = (l: NormalizedLandmark[]) => isExtended(l[8], l[6], l[0]) && isExtended(l[12], l[10], l[0]) && isExtended(l[16], l[14], l[0]) && isExtended(l[20], l[18], l[0]);
+    // Helper to check if a hand is pointing (index extended, others not)
+    const isPointing = (l: NormalizedLandmark[]) => isExtended(l[8], l[6], l[0]) && !isExtended(l[12], l[10], l[0]) && !isExtended(l[16], l[14], l[0]) && !isExtended(l[20], l[18], l[0]);
+
+
+    // 1. HELLO (Wave) - 1 Hand
+    // Logic: Hand mostly Open + Wrist Moving Left <-> Right (Oscillation)
+    // Check if hand was open in at least 70% of last 20 frames
+    const recentFramesForHello = frames.slice(-20);
+    const openHandCount = recentFramesForHello.filter(f => f.some(h => checkOpenHand(h))).length;
+
+    if (openHandCount > 14) { // > 70%
+        // Try to find a consistent "waving" hand.
+        // This is tricky without hand IDs. Let's assume the most prominent hand.
+        // Or, if ANY hand is waving.
+
+        // Collect wrist X positions for all hands that were open
+        const wristXs: number[] = [];
+        for (const frame of recentFramesForHello) {
+            const openHandsInFrame = frame.filter(h => checkOpenHand(h));
+            if (openHandsInFrame.length > 0) {
+                // Take the wrist X of the first open hand found in this frame
+                wristXs.push(openHandsInFrame[0][0].x);
+            }
+        }
+
+        if (wristXs.length > 10) { // Need enough data points
+            // Count direction changes in X
+            let directionChanges = 0;
+            let lastDir = 0;
+
+            for (let i = 1; i < wristXs.length; i++) {
+                const dx = wristXs[i] - wristXs[i - 1];
+                if (Math.abs(dx) > 0.005) {
+                    const dir = dx > 0 ? 1 : -1;
+                    if (lastDir !== 0 && dir !== lastDir) {
+                        directionChanges++;
+                    }
+                    lastDir = dir;
+                }
+            }
+
+            const minX = Math.min(...wristXs);
+            const maxX = Math.max(...wristXs);
+
+            // Require oscillation (wave) AND significant range
+            if (directionChanges >= 2 && (maxX - minX) > 0.1) {
+                return "HELLO";
+            }
+        }
+    }
+
+    // 2. YES (Y-Hand + Nod) - 1 Hand
+    // Check if ANY hand in recent frames matches Y + Nod
+    const yHand = currentFrame.find(h => checkYShape(h));
+    if (yHand) {
+        const yHandHistory: NormalizedLandmark[][] = [];
+        for (const frame of frames.slice(-15)) {
+            const foundYHand = frame.find(h => checkYShape(h));
+            if (foundYHand) {
+                yHandHistory.push(foundYHand);
+            }
+        }
+
+        if (yHandHistory.length > 8) { // Need enough Y-shaped frames
+            const wristYs = yHandHistory.map(h => h[0].y);
+            const wristXs = yHandHistory.map(h => h[0].x);
+
+            let directionChanges = 0;
+            let lastDir = 0;
+            for (let i = 1; i < wristYs.length; i++) {
+                const dy = wristYs[i] - wristYs[i - 1];
+                if (Math.abs(dy) > 0.005) {
+                    const dir = dy > 0 ? 1 : -1;
+                    if (lastDir !== 0 && dir !== lastDir) directionChanges++;
+                    lastDir = dir;
+                }
+            }
+
+            const rangeY = Math.max(...wristYs) - Math.min(...wristYs);
+            const rangeX = Math.max(...wristXs) - Math.min(...wristXs);
+
+            if (directionChanges >= 2 && rangeY > 0.1 && rangeY > rangeX * 1.5) {
+                return "YES";
+            }
+        }
+    }
+
+    // 3. NO (Tap) - 1 Hand
+    // Logic: Transition from Open to Closed (Thumb+Index+Middle touching).
+    const isTapPose = (landmarks: NormalizedLandmark[]) => {
+        const dThumbIndex = dist(landmarks[4], landmarks[8]);
+        const dThumbMiddle = dist(landmarks[4], landmarks[12]);
+        return dThumbIndex < 0.05 && dThumbMiddle < 0.05;
+    };
+
+    const tapHand = currentFrame.find(h => isTapPose(h));
+    if (tapHand) {
+        // Check history: Was it OPEN recently?
+        // Look back 15 frames.
+        const wasOpen = frames.slice(-15, -5).some(f => f.some(h => {
+            const dTI = dist(h[4], h[8]);
+            const dTM = dist(h[4], h[12]);
+            return dTI > 0.1 && dTM > 0.1; // Fingers were apart
+        }));
+
+        if (wasOpen) {
+            return "NO";
+        }
+    }
+
+    // 4. HELP (Fist on Palm + Lift) - 2 Hands
+    if (currentFrame.length >= 2) {
+        const hand1 = currentFrame[0];
+        const hand2 = currentFrame[1];
+
+        let fistHand, flatHand;
+        if (isFist(hand1) && isFlat(hand2)) { fistHand = hand1; flatHand = hand2; }
+        else if (isFist(hand2) && isFlat(hand1)) { fistHand = hand2; flatHand = hand1; }
+
+        if (fistHand && flatHand) {
+            // Check Proximity: Fist Wrist close to Flat Palm (Index MCP/Pinky MCP center?)
+            // Let's use Fist Wrist (0) to Flat Hand Middle MCP (9) as a proxy for palm center.
+            const dProximity = dist(fistHand[0], flatHand[9]);
+
+            if (dProximity < 0.15) { // Adjust threshold as needed
+                // Check Upward Motion
+                // We need history of 2 hands.
+                const recentFramesForHelp = frames.slice(-10);
+                // Calculate avg Y of all hands in frame
+                const avgYs: number[] = [];
+                for (const frame of recentFramesForHelp) {
+                    if (frame.length >= 2) {
+                        // Try to match the fist and flat hand from the current frame
+                        let currentFist = frame.find(h => isFist(h));
+                        let currentFlat = frame.find(h => isFlat(h));
+                        if (currentFist && currentFlat) {
+                            avgYs.push((currentFist[0].y + currentFlat[0].y) / 2);
+                        } else {
+                            // If we can't find both, use average of all hands or skip
+                            avgYs.push(frame.reduce((sum, h) => sum + h[0].y, 0) / frame.length);
+                        }
+                    } else if (frame.length === 1) {
+                        avgYs.push(frame[0][0].y);
+                    } else {
+                        avgYs.push(1); // Placeholder for no hands, will be filtered out by range check
+                    }
+                }
+
+                if (avgYs.length > 5) { // Need enough frames with hands
+                    const startY = avgYs[0];
+                    const endY = avgYs[avgYs.length - 1];
+
+                    if (startY - endY > 0.1) { // Significant upward move (Y decreases upwards)
+                        return "HELP";
+                    }
+                }
+            }
+        }
+    }
+
+    // 5. TIME (Tap Wrist) - 2 Hands
+    if (currentFrame.length >= 2) {
+        const hand1 = currentFrame[0];
+        const hand2 = currentFrame[1];
+
+        let pointerHand, targetHand;
+        if (isPointing(hand1)) { pointerHand = hand1; targetHand = hand2; }
+        else if (isPointing(hand2)) { pointerHand = hand2; targetHand = hand1; }
+
+        if (pointerHand && targetHand) {
+            // Check Index Tip (8) of pointerHand to Wrist (0) of targetHand
+            const dTouch = dist(pointerHand[8], targetHand[0]);
+
+            if (dTouch < 0.1) { // Adjust threshold as needed
+                // Maybe check for tapping motion? 
+                // Or just contact is enough for now.
+                return "TIME";
+            }
+        }
+    }
+
+    // 6. LOVE (Cross Arms) - 2 Hands
+    // Logic: Wrists crossed or very close, Hands on Chest (Y approx 0.5-0.8?)
+    if (currentFrame.length >= 2) {
+        const hand1 = currentFrame[0];
+        const hand2 = currentFrame[1];
+
+        // Check Wrist Proximity
+        const dWrists = dist(hand1[0], hand2[0]);
+
+        // Check if hands are "fists" or "open" (usually fists or flat hands on chest)
+        // Let's just check proximity and location.
+        // Location: Y should be somewhat low (chest level, not face).
+        const avgY = (hand1[0].y + hand2[0].y) / 2;
+
+        if (dWrists < 0.15 && avgY > 0.4 && avgY < 0.9) {
+            // Check if hands are actually crossed?
+            // Hand 1 X < Hand 2 X (if normal), but if crossed, order might swap relative to body?
+            // Hard to tell "crossed" without body landmarks.
+            // But "Wrists touching at chest level" is a good proxy for LOVE.
+            return "LOVE";
+        }
+    }
+
+    // 7. PLAY (Shake Y-Hands) - 2 Hands
+    // Logic: Both hands "Y" shape + Rotation/Shake.
+    if (currentFrame.length >= 2) {
+        const hand1 = currentFrame[0];
+        const hand2 = currentFrame[1];
+
+        if (checkYShape(hand1) && checkYShape(hand2)) {
+            // Check for shaking motion (Rotation or Position oscillation)
+            // Let's check history of both hands.
+            const recentFramesForPlay = frames.slice(-10);
+
+            // Check if BOTH hands are oscillating
+            // Simplified: Check if *either* hand is oscillating significantly?
+            // Or just check if they are Y-hands for a duration?
+            // "PLAY" involves shaking.
+
+            // Let's check Wrist X oscillation for both.
+            let shakeCount = 0;
+            [hand1, hand2].forEach(h => {
+                // We can't track "h" across frames easily without ID.
+                // But we can check if the frame *contained* oscillating Y-hands.
+            });
+
+            // Alternative: Just check if we have 2 Y-hands for > 5 frames.
+            // The "Shake" is hard to distinguish from just holding Y without temporal tracking ID.
+            // But "Holding 2 Y hands" is rare enough.
+            // Let's require 2 Y-hands for 80% of recent history.
+            const twoYCount = recentFramesForPlay.filter(f => f.length >= 2 && checkYShape(f[0]) && checkYShape(f[1])).length;
+
+            if (twoYCount > 6) {
+                return "PLAY";
+            }
+        }
+    }
+
+    // 8. HOUSE (Roof Shape) - 2 Hands
+    // Logic: Flat Hands. Fingertips Touching. Wrists Apart.
+    if (currentFrame.length >= 2) {
+        const hand1 = currentFrame[0];
+        const hand2 = currentFrame[1];
+
+        if (isFlat(hand1) && isFlat(hand2)) {
+            // Check Fingertips Touching (Middle Fingers 12)
+            const dTips = dist(hand1[12], hand2[12]);
+
+            // Check Wrists Apart
+            const dWrists = dist(hand1[0], hand2[0]);
+
+            // Roof: Tips close, Wrists far.
+            if (dTips < 0.1 && dWrists > 0.2) {
+                // Also check Y: Tips should be higher than Wrists (Y is smaller)
+                const tipsY = (hand1[12].y + hand2[12].y) / 2;
+                const wristsY = (hand1[0].y + hand2[0].y) / 2;
+
+                if (tipsY < wristsY) {
+                    return "HOUSE";
+                }
+            }
+        }
+    }
+
+    return null;
+}

@@ -20,15 +20,24 @@ export const STAGES: Stage[] = [
     },
     {
         id: 2,
-        name: "Common Words",
-        description: "Everyday vocabulary.",
-        phrases: ["LOVE", "HELLO", "WORLD", "PEACE", "SMILE", "HAPPY", "FRIEND"],
-        speedMultiplier: 1.2,
+        name: "Action Words",
+        description: "Move your hands!",
+        phrases: ["NO", "TIME", "LOVE", "PLAY", "HOUSE"],
+        speedMultiplier: 1.0, // Slower for actions
         requiredScore: 2000,
         color: "from-blue-400 to-cyan-600"
     },
     {
         id: 3,
+        name: "Body Language",
+        description: "Use your whole body!",
+        phrases: ["HAPPY", "HUNGRY", "COLD", "HOT", "TIRED"],
+        speedMultiplier: 0.8, // Even slower for full body
+        requiredScore: 2500,
+        color: "from-purple-400 to-pink-600"
+    },
+    {
+        id: 4,
         name: "Speed Demon",
         description: "Fast tiles, no mercy.",
         phrases: ["QUICK", "JUMP", "ZEBRA", "VORTEX", "MATRIX", "FLIGHT", "POWER"],
@@ -37,7 +46,7 @@ export const STAGES: Stage[] = [
         color: "from-purple-400 to-pink-600"
     },
     {
-        id: 4,
+        id: 5,
         name: "Master Class",
         description: "Complex patterns, maximum speed.",
         phrases: ["SYMPHONY", "RHYTHM", "JAZZ", "PUZZLE", "OXYGEN", "CRYPTO"],
@@ -46,7 +55,7 @@ export const STAGES: Stage[] = [
         color: "from-orange-400 to-red-600"
     },
     {
-        id: 5,
+        id: 6,
         name: "SignStream God",
         description: "The ultimate challenge.",
         phrases: ["VOCABULARY", "COLLABORATE", "AVAILABILITY", "EXTRAORDINARY", "KNOWLEDGE", "UNDERSTAND"],
