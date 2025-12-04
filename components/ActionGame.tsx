@@ -205,13 +205,14 @@ export default function ActionGame({ stage, onBack }: ActionGameProps) {
         // 1. Download Video
         const a = document.createElement('a');
         a.href = recordingUrl;
-        a.download = `signstream-action-stage-${stage.id}.webm`;
+        a.download = `signum-action-stage-${stage.id}.webm`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
 
         // 2. Copy Caption
-        const text = `I just crushed Stage ${stage.id} (Action Mode) in SignStream with a score of ${score.toLocaleString()}! 🤟 #SignStream #ASL #Gaming`;
+        // 2. Copy Caption
+        const text = `I just crushed Stage ${stage.id} (Action Mode) in Signum with a score of ${score.toLocaleString()}! 🤟 #Signum #ASL #Gaming`;
         navigator.clipboard.writeText(text);
 
         // 3. Open Platform

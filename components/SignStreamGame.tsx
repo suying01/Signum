@@ -411,7 +411,7 @@ export default function SignStreamGame({ stage, onBack }: SignStreamGameProps) {
     }
 
     const shareScore = () => {
-        const text = `I scored ${score.toLocaleString()} in SignStream Stage ${stage.id}! 🤟 Can you beat me?`;
+        const text = `I scored ${score.toLocaleString()} in Signum Stage ${stage.id}! 🤟 Can you beat me?`;
         navigator.clipboard.writeText(text);
         toast.success("Score copied to clipboard!");
     }
@@ -422,13 +422,14 @@ export default function SignStreamGame({ stage, onBack }: SignStreamGameProps) {
         // 1. Download Video
         const a = document.createElement('a');
         a.href = recordingUrl;
-        a.download = `signstream-stage-${stage.id}.webm`;
+        a.download = `signum-stage-${stage.id}.webm`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
 
         // 2. Copy Caption
-        const text = `I just crushed Stage ${stage.id} in SignStream with a score of ${score.toLocaleString()}! 🤟 #SignStream #ASL #Gaming`;
+        // 2. Copy Caption
+        const text = `I just crushed Stage ${stage.id} in Signum with a score of ${score.toLocaleString()}! 🤟 #Signum #ASL #Gaming`;
         navigator.clipboard.writeText(text);
 
         // 3. Open Platform

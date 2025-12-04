@@ -63,8 +63,8 @@ export default function StageSelect({ onSelectStage, onSelectChallenge }: StageS
         <div className="min-h-screen bg-black text-white p-6 flex flex-col items-center font-sans">
             <header className="w-full max-w-md mb-8 flex justify-between items-center">
                 <div>
-                    <h1 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-neon-blue to-neon-pink mb-2 tracking-tighter italic">
-                        SignStream
+                    <h1 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-neon-blue to-neon-pink mb-2 tracking-tighter italic pr-2 pb-1">
+                        Signum
                     </h1>
                     <p className="text-gray-400">Select a Stage</p>
                 </div>
