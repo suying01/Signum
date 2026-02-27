@@ -142,17 +142,18 @@ export default function StageSelect({ onSelectStage, onSelectChallenge, onSelect
                     <p className="text-gray-400">Select a Stage</p>
                 </div>
 
-                {userEmail ? (
-                    <div className="flex items-center gap-2">
-                        <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => setIsHomepageMuted(m => { const next = !m; try { localStorage.setItem('signum-homepage-muted', String(next)) } catch (e) { }; return next })}
-                            aria-label={isHomepageMuted ? 'Unmute music' : 'Mute music'}
-                            className="rounded-full border-white/20 hover:bg-white/10 text-white"
-                        >
-                            {isHomepageMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-                        </Button>
+                {/* Authentication Block Commented Out */}
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setIsHomepageMuted(m => { const next = !m; try { localStorage.setItem('signum-homepage-muted', String(next)) } catch (e) { }; return next })}
+                        aria-label={isHomepageMuted ? 'Unmute music' : 'Mute music'}
+                        className="rounded-full border-white/20 hover:bg-white/10 text-white"
+                    >
+                        {isHomepageMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                    </Button>
+                    {/* {userEmail ? (
                         <Button
                             variant="outline"
                             size="icon"
@@ -162,26 +163,15 @@ export default function StageSelect({ onSelectStage, onSelectChallenge, onSelect
                         >
                             <User className="w-4 h-4" />
                         </Button>
-                    </div>
-                ) : (
-                    <div className="flex items-center gap-2">
-                        <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => setIsHomepageMuted(m => { const next = !m; try { localStorage.setItem('signum-homepage-muted', String(next)) } catch (e) { }; return next })}
-                            aria-label={isHomepageMuted ? 'Unmute music' : 'Mute music'}
-                            className="rounded-full border-white/20 hover:bg-white/10 text-white"
-                        >
-                            {isHomepageMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-                        </Button>
+                    ) : (
                         <Button
                             onClick={() => setIsAuthOpen(true)}
                             className="bg-white/10 hover:bg-white/20 text-white rounded-full px-4"
                         >
                             Login
                         </Button>
-                    </div>
-                )}
+                    )} */}
+                </div>
             </header>
 
             <div className="w-full max-w-md flex flex-col gap-4 mb-8">

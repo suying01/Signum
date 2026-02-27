@@ -377,11 +377,13 @@ export default function SpecialChallengeGame({ onBack }: SpecialChallengeGamePro
                             // Dynamic Delay: 2500ms for Stage 5 (index 4), 3000ms for others
                             const delay = nextStageIdx === 4 ? 2500 : 3000;
 
-                            // Wait then start next stage
+                            // Set up the next stage data immediately so emojis are visible during the delay
+                            setupStageData(nextStageIdx);
+                            loopsCompleted = 0;
+                            currentBeat = -1; // Start immediately (next tick is 0)
+
+                            // Wait then start next stage beat cycle
                             setTimeout(() => {
-                                setupStageData(nextStageIdx);
-                                loopsCompleted = 0;
-                                currentBeat = -1; // Start immediately (next tick is 0)
                                 runInterval();
                             }, delay);
 

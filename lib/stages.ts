@@ -36,31 +36,31 @@ export const STAGES: Stage[] = [
         requiredScore: 2500,
         color: "from-purple-400 to-pink-600"
     },
-    {
-        id: 4,
-        name: "Speed Demon",
-        description: "Fast tiles, no mercy.",
-        phrases: ["QUICK", "JUMP", "ZEBRA", "VORTEX", "MATRIX", "FLIGHT", "POWER"],
-        speedMultiplier: 1.5,
-        requiredScore: 3000,
-        color: "from-purple-400 to-pink-600"
-    },
-    {
-        id: 5,
-        name: "Master Class",
-        description: "Complex patterns, maximum speed.",
-        phrases: ["SYMPHONY", "RHYTHM", "JAZZ", "PUZZLE", "OXYGEN", "CRYPTO"],
-        speedMultiplier: 1.8,
-        requiredScore: 5000,
-        color: "from-orange-400 to-red-600"
-    },
-    {
-        id: 6,
-        name: "SignStream God",
-        description: "The ultimate challenge.",
-        phrases: ["VOCABULARY", "COLLABORATE", "AVAILABILITY", "EXTRAORDINARY", "KNOWLEDGE", "UNDERSTAND"],
-        speedMultiplier: 2.0,
-        requiredScore: 10000,
-        color: "from-red-500 to-rose-900"
-    }
+    // {
+    //     id: 4,
+    //     name: "Speed Demon",
+    //     description: "Fast tiles, no mercy.",
+    //     phrases: ["QUICK", "JUMP", "ZEBRA", "VORTEX", "MATRIX", "FLIGHT", "POWER"],
+    //     speedMultiplier: 1.5,
+    //     requiredScore: 3000,
+    //     color: "from-purple-400 to-pink-600"
+    // },
+    // {
+    //     id: 5,
+    //     name: "Master Class",
+    //     description: "Complex patterns, maximum speed.",
+    //     phrases: ["SYMPHONY", "RHYTHM", "JAZZ", "PUZZLE", "OXYGEN", "CRYPTO"],
+    //     speedMultiplier: 1.8,
+    //     requiredScore: 5000,
+    //     color: "from-orange-400 to-red-600"
+    // },
+    // {
+    //     id: 6,
+    //     name: "SignStream God",
+    //     description: "The ultimate challenge.",
+    //     phrases: ["VOCABULARY", "COLLABORATE", "AVAILABILITY", "EXTRAORDINARY", "KNOWLEDGE", "UNDERSTAND"],
+    //     speedMultiplier: 2.0,
+    //     requiredScore: 10000,
+    //     color: "from-red-500 to-rose-900"
+    // }
 ];
