@@ -260,8 +260,10 @@ export default function SignStreamGame({ stage, onBack }: SignStreamGameProps) {
     // Game Loop
     const updateGame = useCallback((time: number) => {
         if (!lastTimeRef.current) lastTimeRef.current = time
-        const deltaTime = time - lastTimeRef.current
+        let deltaTime = time - lastTimeRef.current
         lastTimeRef.current = time
+
+        deltaTime = Math.max(0, Math.min(deltaTime, 50)) // Clamp deltaTime safely
 
         if (gameOver) return;
 
@@ -269,8 +271,9 @@ export default function SignStreamGame({ stage, onBack }: SignStreamGameProps) {
         spawnTimerRef.current += deltaTime
 
         // Adaptive Speed: Increases significantly with Streak + Stage Multiplier
-        const baseSpeed = 0.04 * stage.speedMultiplier;
-        const currentSpeed = baseSpeed + (streak * 0.002);
+        // Modifiers reduced by roughly 50% to accommodate smooth 60fps unlocked loop
+        const baseSpeed = 0.02 * stage.speedMultiplier;
+        const currentSpeed = baseSpeed + (streak * 0.001);
 
         // Adaptive Spawn Rate: Faster as streak increases
         const baseSpawnRate = 1200 / stage.speedMultiplier;
@@ -351,8 +354,6 @@ export default function SignStreamGame({ stage, onBack }: SignStreamGameProps) {
                 return { ...tile, y: newY }
             }).filter(tile => tile.y < 110) // Cleanup
         })
-
-        gameLoopRef.current = requestAnimationFrame(updateGame)
     }, [streak, nextCharIndex, currentPhrase, currentPhraseIndex, tiles, stage, gameOver, score, isRecordingEnabled])
 
     // Stop recording and webcam with a delay after game over
@@ -395,15 +396,24 @@ export default function SignStreamGame({ stage, onBack }: SignStreamGameProps) {
         })
     }, [detectedGesture, gameActive, streak])
 
+    const updateGameRef = useRef(updateGame);
+    useEffect(() => {
+        updateGameRef.current = updateGame;
+    }, [updateGame]);
+
     useEffect(() => {
         if (gameActive && !countdown) {
             lastTimeRef.current = performance.now()
-            gameLoopRef.current = requestAnimationFrame(updateGame)
+            const loop = (time: number) => {
+                updateGameRef.current(time)
+                gameLoopRef.current = requestAnimationFrame(loop)
+            }
+            gameLoopRef.current = requestAnimationFrame(loop)
         } else {
             cancelAnimationFrame(gameLoopRef.current)
         }
         return () => cancelAnimationFrame(gameLoopRef.current)
-    }, [gameActive, countdown, updateGame])
+    }, [gameActive, countdown])
 
     // Also stop recording if game over (loss) - logic needs to be checked where loss happens
     // Loss happens in setTiles update:
@@ -428,7 +438,7 @@ export default function SignStreamGame({ stage, onBack }: SignStreamGameProps) {
     useEffect(() => {
         try {
             localStorage.setItem('signstream-muted', String(isMusicMuted))
-        } catch (e) {}
+        } catch (e) { }
         if (audioRef.current) {
             audioRef.current.muted = isMusicMuted
         }
@@ -437,7 +447,7 @@ export default function SignStreamGame({ stage, onBack }: SignStreamGameProps) {
     useEffect(() => {
         try {
             localStorage.setItem('signstream-volume', String(musicVolume))
-        } catch (e) {}
+        } catch (e) { }
         if (audioRef.current) {
             audioRef.current.volume = musicVolume
         }
@@ -450,7 +460,7 @@ export default function SignStreamGame({ stage, onBack }: SignStreamGameProps) {
                 if (audioRef.current) {
                     audioRef.current.pause()
                 }
-            } catch (e) {}
+            } catch (e) { }
         }
     }, [gameOver])
 
@@ -535,7 +545,7 @@ export default function SignStreamGame({ stage, onBack }: SignStreamGameProps) {
                 audioRef.current.pause()
                 audioRef.current.currentTime = 0
             }
-        } catch (e) {}
+        } catch (e) { }
         onBack()
     }
 
@@ -619,7 +629,7 @@ export default function SignStreamGame({ stage, onBack }: SignStreamGameProps) {
                     {/* Music toggle */}
                     <div className="flex items-center gap-2 bg-black/50 backdrop-blur-md px-2 py-1 rounded-full border border-white/20">
                         <button
-                            onClick={() => setIsMusicMuted(m => { const next = !m; try { localStorage.setItem('signstream-muted', String(next)) } catch(e){}; return next })}
+                            onClick={() => setIsMusicMuted(m => { const next = !m; try { localStorage.setItem('signstream-muted', String(next)) } catch (e) { }; return next })}
                             aria-label={isMusicMuted ? 'Unmute music' : 'Mute music'}
                             className="text-white hover:text-neon-blue"
                         >

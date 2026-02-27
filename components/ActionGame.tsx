@@ -339,8 +339,10 @@ export default function ActionGame({ stage, onBack }: ActionGameProps) {
     // Game Loop
     const updateGame = useCallback((time: number) => {
         if (!lastTimeRef.current) lastTimeRef.current = time
-        const deltaTime = time - lastTimeRef.current
+        let deltaTime = time - lastTimeRef.current
         lastTimeRef.current = time
+
+        deltaTime = Math.max(0, Math.min(deltaTime, 50)) // Clamp deltaTime safely
 
         if (gameOver) return;
 
@@ -359,7 +361,7 @@ export default function ActionGame({ stage, onBack }: ActionGameProps) {
                 char: currentPhrase, // Full word
                 lane: 1, // Center lane
                 y: -20,
-                speed: 0.04 * stage.speedMultiplier + (streak * 0.002), // Slightly faster tile speed too
+                speed: 0.02 * stage.speedMultiplier + (streak * 0.001), // Reduced speed for smooth 60fps loop
                 isHit: false,
                 isMissed: false
             }
@@ -407,8 +409,6 @@ export default function ActionGame({ stage, onBack }: ActionGameProps) {
                 }
             }
         }
-
-        gameLoopRef.current = requestAnimationFrame(updateGame)
     }, [tiles, currentPhrase, currentPhraseIndex, stage, gameOver, score, streak])
 
     // Hit Check
@@ -488,14 +488,25 @@ export default function ActionGame({ stage, onBack }: ActionGameProps) {
         }, 1000)
     }
 
+    const updateGameRef = useRef(updateGame);
+    useEffect(() => {
+        updateGameRef.current = updateGame;
+    }, [updateGame]);
+
     // Timer Loop
     useEffect(() => {
         if (gameActive && !countdown) {
             lastTimeRef.current = performance.now()
-            gameLoopRef.current = requestAnimationFrame(updateGame)
+            const loop = (time: number) => {
+                updateGameRef.current(time)
+                gameLoopRef.current = requestAnimationFrame(loop)
+            }
+            gameLoopRef.current = requestAnimationFrame(loop)
+        } else {
+            cancelAnimationFrame(gameLoopRef.current)
         }
         return () => cancelAnimationFrame(gameLoopRef.current)
-    }, [gameActive, countdown, updateGame])
+    }, [gameActive, countdown])
 
     const handleBack = () => {
         try {
